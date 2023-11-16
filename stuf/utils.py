@@ -2,17 +2,17 @@
 ## pylint: disable-msg=w0702,f0401
 '''stuf utilities'''
 
-from __future__ import absolute_import
+
 
 try:
     from collections import OrderedDict
 except  ImportError:
     from ordereddict import OrderedDict
 try:
-    from thread import get_ident
+    from _thread import get_ident
 except ImportError:
     try:
-        from dummy_thread import get_ident
+        from _dummy_thread import get_ident
     except ImportError:
         from _thread import get_ident
 from functools import wraps, update_wrapper
@@ -129,7 +129,7 @@ def inverse_lookup(value, this, default=None):
     '''
     try:
         return itemgetter(value)(
-            dict((v, k) for k, v in vars(this).iteritems())
+            dict((v, k) for k, v in vars(this).items())
         )
     except (TypeError, KeyError):
         return default

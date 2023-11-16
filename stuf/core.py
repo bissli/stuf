@@ -2,10 +2,9 @@
 # pylint: disable-msg=w0221,w0212,w0201
 '''core stuf'''
 
-from __future__ import absolute_import
-
 from operator import setitem, getitem
-from collections import Mapping, Sequence, defaultdict, namedtuple
+from collections.abc import Mapping, Sequence
+from collections import defaultdict, namedtuple
 
 from .utils import OrderedDict, getter
 from .base import directstuf, wrapstuf, writewrapstuf
@@ -22,12 +21,6 @@ class defaultstuf(directstuf, defaultdict):
 
     def __getattr__(self, key):
         try:
-            if key == 'iteritems':
-                return self.items
-            elif key == 'iterkeys':
-                return self.keys
-            elif key == 'itervalues':
-                return self.values
             return object.__getattribute__(self, key)
         except AttributeError:
             return getitem(self, key)
@@ -63,11 +56,7 @@ class defaultstuf(directstuf, defaultdict):
 
     def _populate(self, past, future):
         new = self._new
-        try:
-            pitems = past.iteritems
-        except AttributeError:
-            pitems = past.items
-        for key, value in pitems():
+        for key, value in past.items():
             if isinstance(value, (Mapping, Sequence)):
                 # see if stuf can be converted to nested stuf
                 trial = new(self.default_factory, value)
@@ -96,7 +85,7 @@ class fixedstuf(writewrapstuf):
     def __setitem__(self, key, value):
         # only access initial keys
         if key in self.allowed:
-            super(fixedstuf, self).__setitem__(key, value)
+            super().__setitem__(key, value)
         else:
             raise KeyError('key "{0}" not allowed'.format(key))
 
@@ -104,12 +93,8 @@ class fixedstuf(writewrapstuf):
         return (self.__class__, (self._wrapped.copy(),))
 
     def _prepopulate(self, *args, **kw):
-        iterable = super(fixedstuf, self)._prepopulate(*args, **kw)
-        try:
-            ikeys = iterable.iterkeys
-        except AttributeError:
-            ikeys = iterable.keys
-        self.allowed = frozenset(ikeys())
+        iterable = super()._prepopulate(*args, **kw)
+        self.allowed = frozenset(iterable.keys())
         return iterable
 
     def popitem(self):
@@ -132,10 +117,7 @@ class frozenstuf(wrapstuf, Mapping):
             raise KeyError('key {0} not found'.format(key))
 
     def __iter__(self):
-        try:
-            return getter(self, '_wrapped')._asdict().iterkeys()
-        except AttributeError:
-            return iter(getter(self, '_wrapped')._asdict().keys())
+        return iter(getter(self, '_wrapped')._asdict().keys())
 
     def __len__(self):
         return len(getter(self, '_wrapped')._asdict())
@@ -145,11 +127,7 @@ class frozenstuf(wrapstuf, Mapping):
 
     @classmethod
     def _mapping(self, mapping):
-        try:
-            mkeys = mapping.iterkeys
-        except AttributeError:
-            mkeys = mapping.keys
-        frozen = namedtuple('frozenstuf', mkeys())
+        frozen = namedtuple('frozenstuf', mapping.keys())
         return frozen(**mapping)
 
 
